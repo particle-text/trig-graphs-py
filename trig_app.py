@@ -10,8 +10,6 @@ st.set_page_config(
 )
 
 # ---------- SESSION ----------
-if "page" not in st.session_state:
-    st.session_state.page = "welcome"
 if "expr" not in st.session_state:
     st.session_state.expr = "cos(x)"
 
@@ -42,127 +40,105 @@ body {
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- WELCOME PAGE ----------
-if st.session_state.page == "welcome":
-    st.markdown("<h1 style='text-align:center;'>👋 أهلاً بكم</h1>", unsafe_allow_html=True)
-    st.markdown("""
-    <div class="card">
-    <h3>مشروع رسم الدوال المثلثية</h3>
-    <p>
-    هذا مشروع تفاعلي لطلاب الصف العاشر<br>
-    يهدف إلى فهم دوال sin و cos و tan بطريقة بصرية سهلة.
-    </p>
-    <b>إعداد الطالب:</b> يوسف<br>
-    <b>الصف:</b> عاشر (ب)
-    </div>
-    """, unsafe_allow_html=True)
+# ---------- SIDEBAR ----------
+st.sidebar.title("⚙️ الإعدادات")
 
-    if st.button("🚀 ابدأ المشروع"):
-        st.session_state.page = "app"
+x_min = st.sidebar.number_input("x من =", value=-10.0)
+x_max = st.sidebar.number_input("x إلى =", value=10.0)
+
+color = st.sidebar.selectbox(
+    "🎨 لون الرسم",
+    ["blue", "red", "green", "purple", "orange", "black"]
+)
+
+line_width = st.sidebar.slider("✏️ سمك الخط", 1, 5, 2)
+
+# ---------- TITLE ----------
+st.markdown(
+    "<h1 style='text-align:center;'>📊 رسم الدوال المثلثية</h1>",
+    unsafe_allow_html=True
+)
+
+# ---------- EXAMPLES ----------
+st.markdown("### ⭐ معادلات جاهزة")
+examples = {
+    "sin(x)": "sin(x)",
+    "cos(x)": "cos(x)",
+    "tan(x)": "tan(x)",
+    "sin(x)+cos(x)": "sin(x)+cos(x)",
+    "sin(x)*cos(x)": "sin(x)*cos(x)",
+    "x^2": "x^2"
+}
+
+cols = st.columns(len(examples))
+for col, (name, val) in zip(cols, examples.items()):
+    if col.button(name):
+        st.session_state.expr = val
+
+# ---------- INPUT ----------
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+expr = st.text_input("✍️ y =", value=st.session_state.expr)
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    if st.button("❌ مسح المعادلة"):
+        st.session_state.expr = ""
         st.experimental_rerun()
+with c2:
+    clear_plot = st.button("🧹 مسح الرسم")
+with c3:
+    save_plot = st.button("💾 حفظ الرسم")
 
-# ---------- MAIN APP ----------
-if st.session_state.page == "app":
+st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------- SIDEBAR ----------
-    st.sidebar.title("⚙️ الإعدادات")
+# ---------- EXPLANATION ----------
+explanations = {
+    "sin(x)": "دالة الجيب: دورها 2π، مداها من -1 إلى 1",
+    "cos(x)": "دالة جيب التمام: تبدأ من 1",
+    "tan(x)": "دالة الظل: غير معرفة عند π/2 + kπ",
+    "x^2": "دالة تربيعية على شكل U"
+}
 
-    x_min = st.sidebar.number_input("x من =", value=-10.0)
-    x_max = st.sidebar.number_input("x إلى =", value=10.0)
+if expr in explanations:
+    st.info("📘 شرح المعادلة: " + explanations[expr])
 
-    color = st.sidebar.selectbox(
-        "🎨 لون الرسم",
-        ["blue", "red", "green", "purple", "orange", "black"]
-    )
+# ---------- CALC ----------
+x = np.linspace(x_min, x_max, 500)
 
-    line_width = st.sidebar.slider("✏️ سمك الخط", 1, 5, 2)
+safe = {
+    "x": x,
+    "sin": np.sin,
+    "cos": np.cos,
+    "tan": np.tan,
+    "pi": math.pi
+}
 
-    # ---------- TITLE ----------
-    st.markdown(
-        "<h1 style='text-align:center;'>📊 رسم الدوال المثلثية</h1>",
-        unsafe_allow_html=True
-    )
+def calc(expr):
+    return eval(expr.replace("^", "**"), {"__builtins__": {}}, safe)
 
-    # ---------- EXAMPLES ----------
-    st.markdown("### ⭐ معادلات جاهزة")
-    examples = {
-        "sin(x)": "sin(x)",
-        "cos(x)": "cos(x)",
-        "tan(x)": "tan(x)",
-        "sin(x)+cos(x)": "sin(x)+cos(x)",
-        "sin(x)*cos(x)": "sin(x)*cos(x)",
-        "x^2": "x^2"
-    }
+# ---------- PLOT ----------
+if expr and not clear_plot:
+    try:
+        y = calc(expr)
+        y = np.clip(y, -20, 20)
 
-    cols = st.columns(len(examples))
-    for col, (name, val) in zip(cols, examples.items()):
-        if col.button(name):
-            st.session_state.expr = val
+        fig, ax = plt.subplots(figsize=(7, 3.5))
+        ax.plot(x, y, color=color, linewidth=line_width)
+        ax.set_title(f"y = {expr}")
+        ax.grid(True, linestyle="--", alpha=0.6)
 
-    # ---------- INPUT ----------
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    expr = st.text_input("✍️ y =", value=st.session_state.expr)
+        st.pyplot(fig)
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        if st.button("❌ مسح المعادلة"):
-            st.session_state.expr = ""
-            st.experimental_rerun()
-    with c2:
-        clear_plot = st.button("🧹 مسح الرسم")
-    with c3:
-        save_plot = st.button("💾 حفظ الرسم")
+        if save_plot:
+            fig.savefig("graph.png")
+            st.success("✅ تم حفظ الرسم باسم graph.png")
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    except:
+        st.error("❌ المعادلة غير صحيحة")
 
-    # ---------- EXPLANATION ----------
-    explanations = {
-        "sin(x)": "دالة الجيب: دورها 2π، مداها من -1 إلى 1",
-        "cos(x)": "دالة جيب التمام: تشبه sin لكن تبدأ من 1",
-        "tan(x)": "دالة الظل: غير معرفة عند π/2 + kπ",
-        "x^2": "دالة تربيعية: تعطي منحنى على شكل U"
-    }
-
-    if expr in explanations:
-        st.info("📘 شرح المعادلة: " + explanations[expr])
-
-    # ---------- CALC ----------
-    x = np.linspace(x_min, x_max, 500)
-
-    safe = {
-        "x": x,
-        "sin": np.sin,
-        "cos": np.cos,
-        "tan": np.tan,
-        "pi": math.pi
-    }
-
-    def calc(expr):
-        return eval(expr.replace("^", "**"), {"__builtins__": {}}, safe)
-
-    # ---------- PLOT ----------
-    if expr and not clear_plot:
-        try:
-            y = calc(expr)
-            y = np.clip(y, -20, 20)
-
-            fig, ax = plt.subplots(figsize=(7, 3.5))
-            ax.plot(x, y, color=color, linewidth=line_width)
-            ax.set_title(f"y = {expr}")
-            ax.grid(True, linestyle="--", alpha=0.6)
-
-            st.pyplot(fig)
-
-            if save_plot:
-                fig.savefig("graph.png")
-                st.success("✅ تم حفظ الرسم باسم graph.png")
-
-        except:
-            st.error("❌ المعادلة غير صحيحة")
-
-    # ---------- FOOTER ----------
-    st.markdown("---")
-    st.markdown("""
-    **الاسم:** يوسف  
-    **الصف:** عاشر (ب)
-    """)
+# ---------- FOOTER ----------
+st.markdown("---")
+st.markdown("""
+**الاسم:** يوسف  
+**الصف:** عاشر (ب)
+""")
