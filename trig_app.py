@@ -30,7 +30,7 @@ if dark_mode:
     fg = "white"
     card = "#161b22"
 else:
-    bg = "#ffffff"
+    bg = "white"
     fg = "black"
     card = "#f4f4f4"
 
@@ -56,7 +56,7 @@ body {{
 </style>
 
 <div class="math-bg">
-π sin cos ∫ tan √ x² log π sin cos ∫
+π sin cos tan π sin cos tan
 </div>
 """, unsafe_allow_html=True)
 
@@ -74,8 +74,7 @@ examples = {
     "tan(x)": "tan(x)",
     "sin(x)+cos(x)": "sin(x)+cos(x)",
     "sin(x)*cos(x)": "sin(x)*cos(x)",
-    "x^2": "x^2",
-    "√|x|": "sqrt(abs(x))"
+    "x^2": "x^2"
 }
 
 cols = st.columns(len(examples))
@@ -109,9 +108,6 @@ safe = {
     "sin": np.sin,
     "cos": np.cos,
     "tan": np.tan,
-    "sqrt": np.sqrt,
-    "log": np.log,
-    "abs": np.abs,
     "pi": math.pi
 }
 
@@ -122,9 +118,11 @@ def calc(expr):
 if expr and not clear_plot:
     try:
         y = calc(expr)
+
+        # منع تخبيص tan
         y = np.clip(y, -20, 20)
 
-        fig, ax = plt.subplots(figsize=(7, 3.5))  # 👈 رسم أصغر
+        fig, ax = plt.subplots(figsize=(7, 3.5))
         ax.plot(x, y, color=color, linewidth=line_width)
 
         ax.set_title(f"y = {expr}")
