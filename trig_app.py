@@ -53,6 +53,13 @@ color = st.sidebar.selectbox(
 
 line_width = st.sidebar.slider("✏️ سمك الخط", 1, 5, 2)
 
+# ---------- SCHOOL LOGO ----------
+col_logo1, col_logo2, col_logo3 = st.columns([1, 2, 1])
+
+with col_logo2:
+    st.image("logo.png", width=200)
+
+
 # ---------- TITLE ----------
 st.markdown(
     "<h1 style='text-align:center;'>📊 رسم الدوال المثلثية</h1>",
