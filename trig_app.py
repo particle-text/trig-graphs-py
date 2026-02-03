@@ -3,109 +3,121 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-# ---------- PAGE CONFIG ----------
+# ======================
+# إعداد الصفحة
+# ======================
 st.set_page_config(
-    page_title="مشروع الرياضيات التفاعلي",
+    page_title="Interactive Math Graph",
     layout="wide"
 )
 
-# ---------- SESSION ----------
-if "expr" not in st.session_state:
-    st.session_state.expr = "cos(x)"
-
-# ---------- STYLE ----------
+# ======================
+# إخفاء الـ Sidebar
+# ======================
 st.markdown("""
 <style>
-body {
-    background-color: #0e1117;
-    color: white;
-}
-
-.block-container {
-    padding-top: 1.5rem;
-}
-
-.card {
-    background-color: #161b22;
-    padding: 20px;
-    border-radius: 14px;
-}
-
-input {
-    font-size: 18px !important;
+[data-testid="stSidebar"] {
+    display: none;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- SIDEBAR ----------
-st.sidebar.markdown("## ⚙️ الإعدادات")
+# ======================
+# اللغة (Session State)
+# ======================
+if "lang" not in st.session_state:
+    st.session_state.lang = "ar"
 
-x_min = st.sidebar.number_input("x من", value=-10.0)
-x_max = st.sidebar.number_input("x إلى", value=10.0)
+def t(ar, en):
+    return ar if st.session_state.lang == "ar" else en
 
-color = st.sidebar.selectbox(
-    "🎨 لون الرسم",
-    ["blue", "red", "green", "purple", "orange"]
-)
+# ======================
+# الهيدر + الشعار
+# ======================
+col1, col2 = st.columns([1, 6])
 
-line_width = st.sidebar.slider("✏️ سمك الخط", 1, 5, 2)
+with col1:
+    st.image("logo.png", width=120)
 
-# ---------- TITLE ----------
-st.markdown(
-    "<h1 style='text-align:center;'>📊 مشروع الرياضيات التفاعلي</h1>",
-    unsafe_allow_html=True
-)
+with col2:
+    st.markdown(
+        f"<h1 style='text-align:right'>{t('مشروع الرياضيات التفاعلي','Interactive Math Project')}</h1>",
+        unsafe_allow_html=True
+    )
 
-# ---------- INPUT CARD ----------
-st.markdown("<div class='card'>", unsafe_allow_html=True)
+# زر تغيير اللغة
+if st.button(t("English 🌍", "العربية 🌍")):
+    st.session_state.lang = "en" if st.session_state.lang == "ar" else "ar"
+    st.rerun()
 
-expr = st.text_input("✍️ y =", value=st.session_state.expr)
+st.divider()
 
-c1, c2 = st.columns(2)
+# ======================
+# إدخال المعادلة والمجال
+# ======================
+c1, c2, c3 = st.columns(3)
+
 with c1:
-    if st.button("❌ مسح المعادلة"):
-        st.session_state.expr = ""
-        st.experimental_rerun()
+    x_min = st.number_input(t("من x =", "From x ="), value=-10.0)
 
 with c2:
-    clear_plot = st.button("🧹 مسح الرسم")
+    x_max = st.number_input(t("إلى x =", "To x ="), value=10.0)
 
-st.markdown("</div>", unsafe_allow_html=True)
+with c3:
+    color = st.selectbox(
+        t("لون الرسم", "Graph Color"),
+        ["blue", "red", "green", "purple", "orange"]
+    )
 
-# ---------- CALC ----------
-x = np.linspace(x_min, x_max, 500)
+equation = st.text_input(
+    t("أدخل المعادلة (مثال: sin(x)+cos(x))",
+      "Enter equation (example: sin(x)+cos(x))"),
+    value="cos(x)"
+)
 
-safe = {
-    "x": x,
-    "sin": np.sin,
-    "cos": np.cos,
-    "tan": np.tan,
-    "pi": math.pi
-}
+line_width = st.slider(
+    t("سماكة الخط", "Line Width"),
+    1, 5, 2
+)
 
-def calc(expr):
-    return eval(expr.replace("^", "**"), {"__builtins__": {}}, safe)
+# ======================
+# أزرار التحكم
+# ======================
+b1, b2 = st.columns(2)
 
-# ---------- PLOT ----------
-if expr and not clear_plot:
+with b1:
+    clear_eq = st.button(t("🧹 مسح المعادلة", "🧹 Clear Equation"))
+
+with b2:
+    clear_plot = st.button(t("🎨 مسح الرسم", "🎨 Clear Plot"))
+
+if clear_eq:
+    st.rerun()
+
+# ======================
+# الرسم
+# ======================
+if equation and not clear_plot:
     try:
-        y = calc(expr)
-        y = np.clip(y, -20, 20)
+        x = np.linspace(x_min, x_max, 1000)
 
-        fig, ax = plt.subplots(figsize=(6.5, 3.2))  # 👈 حجم مناسب بدون Scroll
+        allowed = {
+            "sin": np.sin,
+            "cos": np.cos,
+            "tan": np.tan,
+            "pi": np.pi,
+            "x": x
+        }
+
+        y = eval(equation, {"__builtins__": {}}, allowed)
+
+        fig, ax = plt.subplots(figsize=(8, 4))
         ax.plot(x, y, color=color, linewidth=line_width)
 
-        ax.set_title(f"y = {expr}")
-        ax.grid(True, linestyle="--", alpha=0.6)
+        ax.set_title(f"y = {equation}")
+        ax.grid(True)
 
         st.pyplot(fig)
 
-    except:
-        st.error("❌ المعادلة غير صحيحة")
-
-# ---------- FOOTER ----------
-st.markdown("---")
-st.markdown("""
-**الاسم:** يوسف  
-**الصف:** عاشر (ب)
-""")
+    except Exception as e:
+        st.error(t("خطأ في المعادلة ❌", "Equation Error ❌"))
