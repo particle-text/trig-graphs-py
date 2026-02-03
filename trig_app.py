@@ -67,7 +67,8 @@ examples = {
     "tan(x)": "tan(x)",
     "sin(x)+cos(x)": "sin(x)+cos(x)",
     "sin(x)*cos(x)": "sin(x)*cos(x)",
-    "x^2": "x^2"
+    "x^2": "x^2",
+    "sin(x) + sin(2*x)*cos(3*x) + sin(5*x)/5": "sin(x) + sin(2*x)*cos(3*x) + sin(5*x)/5"
 }
 
 cols = st.columns(len(examples))
