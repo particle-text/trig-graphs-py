@@ -5,72 +5,102 @@ import math
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="Trigonometric Graph Visualizer",
-    layout="centered"
+    page_title="مشروع الرياضيات التفاعلي",
+    layout="wide"
 )
 
+# ---------------- SIDEBAR ----------------
+st.sidebar.title("⚙️ الإعدادات")
+
+dark_mode = st.sidebar.checkbox("🌙 وضع ليلي", value=True)
+
+x_min = st.sidebar.number_input("x من =", value=-10.0)
+x_max = st.sidebar.number_input("x إلى =", value=10.0)
+
+color = st.sidebar.selectbox(
+    "🎨 لون الرسم",
+    ["blue", "red", "green", "purple", "orange", "black"]
+)
+
+line_width = st.sidebar.slider("✏️ سمك الخط", 1, 5, 2)
+
 # ---------------- STYLE ----------------
-st.markdown("""
+if dark_mode:
+    bg = "#0e1117"
+    fg = "white"
+else:
+    bg = "white"
+    fg = "black"
+
+st.markdown(f"""
 <style>
-body {
-    background-color: white;
-    background-image:
-        repeating-linear-gradient(
-            45deg,
-            rgba(0, 0, 0, 0.03),
-            rgba(0, 0, 0, 0.03) 1px,
-            transparent 1px,
-            transparent 20px
-        );
-}
+body {{
+    background-color: {bg};
+    color: {fg};
+}}
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------- TITLE ----------------
-st.title("📈 Trigonometric Graph Visualizer")
-st.write("اكتب معادلة مثل: sin(x), cos(x), x^2 + 3*x")
+st.markdown(
+    "<h1 style='text-align:center;'>📊 مشروع الرياضيات التفاعلي</h1>",
+    unsafe_allow_html=True
+)
 
-# ---------------- INPUTS ----------------
-expr = st.text_input("y =", value="sin(x)")
+# ---------------- INPUT ----------------
+expr = st.text_input("✍️ y =", value="cos(x)")
 
 col1, col2 = st.columns(2)
 with col1:
-    x_min = st.number_input("من", value=-10.0)
+    clear_expr = st.button("❌ مسح المعادلة")
 with col2:
-    x_max = st.number_input("إلى", value=10.0)
+    clear_plot = st.button("🧹 مسح الرسم")
 
-color = st.color_picker("اختر لون الرسم", "#1f77b4")
+if clear_expr:
+    st.experimental_rerun()
 
-clear = st.button("🧹 مسح الرسم")
+# ---------------- CALCULATION ----------------
+x = np.linspace(x_min, x_max, 600)
 
-# ---------------- PLOT ----------------
-x = np.linspace(x_min, x_max, 400)
-
-allowed = {
+safe_dict = {
     "x": x,
     "sin": np.sin,
     "cos": np.cos,
     "tan": np.tan,
     "sqrt": np.sqrt,
     "log": np.log,
-    "pi": math.pi
+    "pi": math.pi,
+    "abs": np.abs
 }
 
-if expr and not clear:
+def safe_eval(expr):
+    return eval(expr.replace("^", "**"), {"__builtins__": {}}, safe_dict)
+
+# ---------------- PLOT ----------------
+if expr and not clear_plot:
     try:
-        y = eval(expr, {"__builtins__": {}}, allowed)
+        y = safe_eval(expr)
+
+        # منع تخبيص tan
+        y = np.clip(y, -20, 20)
 
         fig, ax = plt.subplots()
-        ax.plot(x, y, color=color)
+        ax.plot(x, y, color=color, linewidth=line_width)
+
+        ax.set_title(f"y = {expr}")
         ax.set_xlabel("x")
         ax.set_ylabel("y")
-        ax.grid(True)
+
+        ax.grid(True, linestyle="--", alpha=0.5)
 
         st.pyplot(fig)
 
-    except Exception as e:
+    except:
         st.error("❌ المعادلة غير صحيحة")
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-st.markdown("**الاسم:** يوسف  \n**الصف:** عاشر (ب)")
+st.markdown("""
+**الاسم:** يوسف  
+**الصف:** عاشر (ب)
+""")
