@@ -3,17 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-# ---------- PAGE CONFIG ----------
+
 st.set_page_config(
     page_title="مشروع يوسف - الدوال المثلثية",
     layout="wide"
 )
 
-# ---------- SESSION ----------
 if "expr" not in st.session_state:
     st.session_state.expr = "cos(x)"
 
-# ---------- STYLE ----------
 st.markdown("""
 <style>
 body {
@@ -40,7 +38,6 @@ body {
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- SIDEBAR ----------
 st.sidebar.title("⚙️ الإعدادات")
 
 x_min = st.sidebar.number_input("x من =", value=-10.0)
@@ -53,13 +50,11 @@ color = st.sidebar.selectbox(
 
 line_width = st.sidebar.slider("✏️ سمك الخط", 1, 5, 2)
 
-# ---------- TITLE ----------
 st.markdown(
     "<h1 style='text-align:center;'>📊 رسم الدوال المثلثية</h1>",
     unsafe_allow_html=True
 )
 
-# ---------- EXAMPLES ----------
 st.markdown("### ⭐ معادلات جاهزة")
 examples = {
     "sin(x)": "sin(x)",
@@ -76,7 +71,6 @@ for col, (name, val) in zip(cols, examples.items()):
     if col.button(name):
         st.session_state.expr = val
 
-# ---------- INPUT ----------
 st.markdown("<div class='card'>", unsafe_allow_html=True)
 expr = st.text_input("✍️ y =", value=st.session_state.expr)
 
@@ -92,7 +86,6 @@ with c3:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ---------- EXPLANATION ----------
 explanations = {
     "sin(x)": "دالة الجيب: دورها 2π، مداها من -1 إلى 1",
     "cos(x)": "دالة جيب التمام: تبدأ من 1",
@@ -103,7 +96,6 @@ explanations = {
 if expr in explanations:
     st.info("📘 شرح المعادلة: " + explanations[expr])
 
-# ---------- CALC ----------
 x = np.linspace(x_min, x_max, 500)
 
 safe = {
@@ -117,7 +109,6 @@ safe = {
 def calc(expr):
     return eval(expr.replace("^", "**"), {"__builtins__": {}}, safe)
 
-# ---------- PLOT ----------
 if expr and not clear_plot:
     try:
         y = calc(expr)
@@ -137,7 +128,6 @@ if expr and not clear_plot:
     except:
         st.error("❌ المعادلة غير صحيحة")
 
-# ---------- FOOTER ----------
 st.markdown("---")
 st.markdown("""
 **الاسم:** يوسف  
