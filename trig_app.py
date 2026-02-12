@@ -1,15 +1,10 @@
 import streamlit as st
 import numpy as np
-import plotly.graph_objects as go  # <--- THIS WAS MISSING
+import matplotlib.pyplot as plt
 import math
 
 # Page setup
-st.set_page_config(
-    page_title="Yousef's Math Lab",
-    page_icon="📉",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Yousef's Math Lab", page_icon="📉", layout="wide")
 
 # --- ADVANCED PREMIUM STYLING ---
 st.markdown("""
@@ -31,91 +26,58 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- MATH LOGIC ---
-def solve_math(expr, x_range):
-    safe_dict = {
-        "x": x_range, "sin": np.sin, "cos": np.cos, "tan": np.tan,
-        "pi": np.pi, "sqrt": np.sqrt, "exp": np.exp, "abs": np.abs
-    }
-    clean_expr = expr.replace("^", "**")
-    return eval(clean_expr, {"__builtins__": {}}, safe_dict)
-
-# --- SIDEBAR ---
-with st.sidebar:
-    st.markdown("<h2 style='text-align:center;'>🛠️ المختبر الرياضي</h2>", unsafe_allow_html=True)
-    x_min = st.number_input("x من", value=-6.28)
-    x_max = st.number_input("x إلى", value=6.28)
-    st.divider()
-    line_color = st.color_picker("🎨 لون المنحنى", "#6366f1")
-    fill_area = st.checkbox("تظليل المساحة", value=True)
-    grid_alpha = st.slider("شفافية الشبكة", 0.0, 1.0, 0.3)
-
-# --- HEADER ---
-st.markdown("<div class='glow-text'>راسم الدوال الذكي</div>", unsafe_allow_html=True)
-
-# --- PRESET EXAMPLES ---
 if "current_expr" not in st.session_state:
     st.session_state.current_expr = "sin(x)"
 
-st.markdown("##### 🚀 نماذج سريعة")
-cols = st.columns(6)
-presets = {
-    "Sin Wave": "sin(x)",
-    "Cos Wave": "cos(x)",
-    "Tan Graph": "tan(x)",
-    "Complex": "sin(x)*cos(x*2)",
-    "Pulse": "sin(x)*exp(-abs(x)/5)",
-    "Square": "x^2"
-}
+# --- SIDEBAR ---
+with st.sidebar:
+    st.markdown("## ⚙️ الإعدادات")
+    x_min = st.number_input("x من", value=-10.0)
+    x_max = st.number_input("x إلى", value=10.0)
+    line_color = st.color_picker("🎨 لون الخط", "#3b82f6")
+    grid_on = st.checkbox("إظهار الشبكة", value=True)
 
+st.markdown("<div class='glow-text'>راسم الدوال الذكي</div>", unsafe_allow_html=True)
+
+# --- PRESETS ---
+cols = st.columns(4)
+presets = {"Sin(x)": "sin(x)", "Cos(x)": "cos(x)", "Tan(x)": "tan(x)", "Square": "x^2"}
 for i, (name, formula) in enumerate(presets.items()):
-    if cols[i].button(name, use_container_width=True):
+    if cols[i%4].button(name, use_container_width=True):
         st.session_state.current_expr = formula
-        st.rerun() # Refresh to update input box
+        st.rerun()
 
-# --- MAIN INPUT ---
-expr_input = st.text_input("✍️ اكتب دالتك الرياضية (مثال: sin(x) + cos(x/2))", 
-                          value=st.session_state.current_expr)
+expr_input = st.text_input("✍️ أدخل المعادلة:", value=st.session_state.current_expr)
 
-# --- CALCULATION & PLOT ---
+# --- PLOTTING ---
 try:
     x = np.linspace(x_min, x_max, 1000)
-    y = solve_math(expr_input, x)
-    y_plot = np.copy(y)
-    y_plot[np.abs(y_plot) > 20] = np.nan 
+    safe_dict = {"x": x, "sin": np.sin, "cos": np.cos, "tan": np.tan, "pi": np.pi, "sqrt": np.sqrt}
+    y = eval(expr_input.replace("^", "**"), {"__builtins__": {}}, safe_dict)
+    
+    # Create Matplotlib Figure
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 4))
+    fig.patch.set_facecolor('#0f172a')
+    ax.set_facecolor('#0f172a')
+    
+    y_masked = np.ma.masked_where(np.abs(y) > 20, y) # Fix Tan(x) lines
+    ax.plot(x, y_masked, color=line_color, linewidth=3)
+    
+    if grid_on:
+        ax.grid(alpha=0.2)
+    
+    st.pyplot(fig)
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=x, y=y_plot, mode='lines',
-        line=dict(color=line_color, width=4),
-        fill='tozeroy' if fill_area else None,
-        fillcolor=f"rgba(99, 102, 241, 0.1)",
-        name=expr_input
-    ))
-
-    fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(gridcolor=f'rgba(255,255,255,{grid_alpha})', zerolinecolor='white'),
-        yaxis=dict(gridcolor=f'rgba(255,255,255,{grid_alpha})', zerolinecolor='white'),
-        font=dict(color="white"), height=450
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # --- ANALYSIS ---
+    # --- STATS ---
     st.markdown("### 📊 تحليل البيانات")
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.markdown(f"<div class='metric-card'><b>أعلى قيمة</b><br><h2 style='color:#10b981'>{np.nanmax(y):.2f}</h2></div>", unsafe_allow_html=True)
-    with m2:
-        st.markdown(f"<div class='metric-card'><b>أدنى قيمة</b><br><h2 style='color:#ef4444'>{np.nanmin(y):.2f}</h2></div>", unsafe_allow_html=True)
-    with m3:
-        st.markdown(f"<div class='metric-card'><b>المتوسط</b><br><h2>{np.nanmean(y):.2f}</h2></div>", unsafe_allow_html=True)
-    with m4:
-        st.markdown(f"<div class='metric-card'><b>المجال x</b><br><h2>{x_max - x_min:.1f}</h2></div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    c1.markdown(f"<div class='metric-card'>Max<br><h2>{np.nanmax(y):.2f}</h2></div>", unsafe_allow_html=True)
+    c2.markdown(f"<div class='metric-card'>Min<br><h2>{np.nanmin(y):.2f}</h2></div>", unsafe_allow_html=True)
+    c3.markdown(f"<div class='metric-card'>Mean<br><h2>{np.nanmean(y):.2f}</h2></div>", unsafe_allow_html=True)
 
 except Exception as e:
-    st.error(f"⚠️ خطأ في الصيغة: {e}")
+    st.error("صيغة غير صحيحة")
 
-st.markdown("<br><hr>", unsafe_allow_html=True)
-st.write("👤 **إعداد الطالب:** يوسف | عاشر - ب")
+st.markdown("---")
+st.write("👤 إعداد الطالب: يوسف")
