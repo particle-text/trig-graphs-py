@@ -86,4 +86,4 @@ with f1:
     st.write("👤 **إعداد الطالب:** يوسف")
     st.write("🏫 **الصف:** عاشر - ب")
 with f2:
-    st.markdown("<div style='text-align:left'>2024 © مختبر الرياضيات الرقمي</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:left'>2026 © v2.0</div>", unsafe_allow_html=True)
