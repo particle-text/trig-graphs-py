@@ -79,5 +79,11 @@ try:
 except Exception as e:
     st.error("صيغة غير صحيحة")
 
-st.markdown("---")
-st.write("👤 إعداد الطالب: يوسف")
+# --- FOOTER ---
+st.markdown("<br><hr>", unsafe_allow_html=True)
+f1, f2 = st.columns(2)
+with f1:
+    st.write("👤 **إعداد الطالب:** يوسف")
+    st.write("🏫 **الصف:** عاشر - ب")
+with f2:
+    st.markdown("<div style='text-align:left'>2024 © مختبر الرياضيات الرقمي</div>", unsafe_allow_html=True)
