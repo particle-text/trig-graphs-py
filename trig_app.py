@@ -1,174 +1,176 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import math
 
-# Page setup
+# Page setup for a premium feel
 st.set_page_config(
-    page_title="مشروع يوسف - الدوال المثلثية",
+    page_title="Yousef's Math Lab",
+    page_icon="📉",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- MODERN STYLING (CSS) ---
+# --- ADVANCED PREMIUM STYLING ---
 st.markdown("""
 <style>
-    /* Main background */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Cairo', sans-serif;
+    }
+
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        background: radial-gradient(circle at top right, #1e293b, #0f172a);
         color: #f8fafc;
     }
     
-    /* Card design for inputs */
-    .main-card {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 2rem;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
+    /* Glowing Title */
+    .glow-text {
+        text-align: center;
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradient 3s linear infinite;
         margin-bottom: 20px;
     }
     
-    /* Background math pattern */
-    .math-pattern {
-        position: fixed;
-        top: 10%;
-        left: 5%;
-        font-size: 150px;
-        font-weight: bold;
-        color: rgba(255,255,255,0.02);
-        z-index: -1;
-        user-select: none;
+    @keyframes gradient {
+        0% { background-position: 0% center; }
+        100% { background-position: 200% center; }
     }
-    
-    /* Title styling */
-    h1 {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: -webkit-linear-gradient(#3b82f6, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
+
+    /* Glassmorphism Cards */
+    .metric-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 15px;
         text-align: center;
     }
-    
-    /* Style buttons */
-    .stButton>button {
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        width: 100%;
-    }
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+
+    /* sidebar width and style */
+    section[data-testid="stSidebar"] {
+        background-color: rgba(15, 23, 42, 0.9);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
 </style>
-
-<div class="math-pattern">f(x) = sin(θ)</div>
 """, unsafe_allow_html=True)
 
-# --- SESSION STATE ---
-if "expr" not in st.session_state:
-    st.session_state.expr = "sin(x)"
+# --- MATH LOGIC ---
+def solve_math(expr, x_range):
+    safe_dict = {
+        "x": x_range,
+        "sin": np.sin,
+        "cos": np.cos,
+        "tan": np.tan,
+        "pi": np.pi,
+        "sqrt": np.sqrt,
+        "exp": np.exp,
+        "abs": np.abs
+    }
+    # Handle the power symbol
+    clean_expr = expr.replace("^", "**")
+    return eval(clean_expr, {"__builtins__": {}}, safe_dict)
 
-# --- SIDEBAR SETTINGS ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.markdown("## ⚙️ التحكم في الرسم")
-    x_min = st.number_input("بداية المحور (x من)", value=-10.0)
-    x_max = st.number_input("نهاية المحور (x إلى)", value=10.0)
+    st.markdown("<h2 style='text-align:center;'>🛠️ المختبر الرياضي</h2>", unsafe_allow_html=True)
+    st.info("قم بتعديل خصائص الرسم البياني من هنا")
+    
+    x_min = st.number_input("x من", value=-6.28)
+    x_max = st.number_input("x إلى", value=6.28)
     
     st.divider()
     
-    color = st.color_picker("🎨 اختر لون المنحنى", "#3b82f6")
-    line_width = st.slider("✏️ سمك الخط", 1, 10, 3)
-    grid_on = st.checkbox("إظهار الشبكة", value=True)
+    line_color = st.color_picker("🎨 لون المنحنى", "#6366f1")
+    fill_area = st.checkbox("تظليل المساحة تحت المنحنى", value=True)
+    grid_alpha = st.slider("شفافية الشبكة", 0.0, 1.0, 0.3)
 
-# --- MAIN CONTENT ---
-st.markdown("<h1>📊 راسم الدوال المثلثية الاحترافي</h1>", unsafe_allow_html=True)
+# --- HEADER ---
+st.markdown("<div class='glow-text'>راسم الدوال الذكي</div>", unsafe_allow_html=True)
 
-# Preset Buttons Section
-st.markdown("### ⚡ اختصارات ذكية")
-examples = {
-    "Sin(x)": "sin(x)",
-    "Cos(x)": "cos(x)",
-    "Tan(x)": "tan(x)",
-    "Wave Mixed": "sin(x)+cos(x*2)",
-    "Complexity": "sin(x)*cos(x/2)",
-    "Harmonic": "sin(x)+sin(3*x)/3+sin(5*x)/5"
+# --- PRESET EXAMPLES ---
+st.markdown("##### 🚀 نماذج سريعة")
+cols = st.columns(6)
+presets = {
+    "Sin Wave": "sin(x)",
+    "Cos Wave": "cos(x)",
+    "Tan Graph": "tan(x)",
+    "Complex": "sin(x)*cos(x*2)",
+    "Pulse": "sin(x)*exp(-abs(x)/5)",
+    "Square": "x^2"
 }
 
-# Create row of buttons
-cols_examples = st.columns(len(examples))
-for i, (name, val) in enumerate(examples.items()):
-    if cols_examples[i].button(name):
-        st.session_state.expr = val
+if "current_expr" not in st.session_state:
+    st.session_state.current_expr = "sin(x)"
 
-# Input Section with Modern Container
-with st.container():
-    st.markdown('<div class="main-card">', unsafe_allow_html=True)
-    expr = st.text_input("✍️ أدخل المعادلة الرياضية (استخدم x كمتغير):", value=st.session_state.expr, key="eq_input")
+for i, (name, formula) in enumerate(presets.items()):
+    if cols[i].button(name, use_container_width=True):
+        st.session_state.current_expr = formula
+
+# --- MAIN INPUT ---
+st.markdown("<br>", unsafe_allow_html=True)
+expr_input = st.text_input("✍️ اكتب دالتك الرياضية (مثال: sin(x) + cos(x/2))", 
+                          value=st.session_state.current_expr)
+
+# --- CALCULATION & PLOT ---
+try:
+    x = np.linspace(x_min, x_max, 1000)
+    y = solve_math(expr_input, x)
     
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        if st.button("❌ مسح"):
-            st.session_state.expr = ""
-            st.rerun()
-    with c2:
-        save_plot = st.button("💾 حفظ صورة")
-    with c3:
-        st.button("🔄 تحديث")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Cleaning Y values for better tan(x) viewing
+    y[np.abs(y) > 20] = np.nan 
 
-# Calculations
-x = np.linspace(x_min, x_max, 1000) # Increased density for smoother curves
-safe = {"x": x, "sin": np.sin, "cos": np.cos, "tan": np.tan, "pi": math.pi, "sqrt": np.sqrt}
+    # Plotly Interactive Figure
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=x, y=y,
+        mode='lines',
+        line=dict(color=line_color, width=4),
+        fill='tozeroy' if fill_area else None,
+        fillcolor=f"rgba(99, 102, 241, 0.2)",
+        name=expr_input,
+        hovertemplate="x: %{x:.2f}<br>y: %{y:.2f}"
+    ))
 
-if expr:
-    try:
-        # Evaluate math logic
-        y = eval(expr.replace("^", "**"), {"__builtins__": {}}, safe)
-        y = np.clip(y, -50, 50) # Prevent infinity from breaking the visual
+    fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(gridcolor=f'rgba(255,255,255,{grid_alpha})', zerolinecolor='white'),
+        yaxis=dict(gridcolor=f'rgba(255,255,255,{grid_alpha})', zerolinecolor='white'),
+        font=dict(color="white"),
+        height=500,
+        hovermode="x unified"
+    )
 
-        # --- MATPLOTLIB STYLING ---
-        plt.style.use('dark_background')
-        fig, ax = plt.subplots(figsize=(10, 5))
-        fig.patch.set_facecolor('#1e293b') # Match app bg
-        ax.set_facecolor('#1e293b')
-        
-        ax.plot(x, y, color=color, linewidth=line_width, label=f"y = {expr}")
-        
-        # Axis labels and ticks
-        ax.tick_params(colors='white', which='both')
-        ax.spines['bottom'].set_color('#64748b')
-        ax.spines['left'].set_color('#64748b')
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        
-        if grid_on:
-            ax.grid(True, linestyle="--", alpha=0.2, color="#94a3b8")
-        
-        ax.axhline(0, color='white', linewidth=0.5) # x-axis line
-        ax.axvline(0, color='white', linewidth=0.5) # y-axis line
-        
-        st.pyplot(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
-        if save_plot:
-            fig.savefig("my_graph.png", dpi=300)
-            st.success("🎉 تم حفظ الرسم بنجاح!")
+    # --- ANALYSIS PILLS ---
+    st.markdown("### 📊 تحليل البيانات")
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        st.markdown(f"<div class='metric-card'><b>أعلى قيمة</b><br><h2 style='color:#10b981'>{np.nanmax(y):.2f}</h2></div>", unsafe_allow_html=True)
+    with m2:
+        st.markdown(f"<div class='metric-card'><b>أدنى قيمة</b><br><h2 style='color:#ef4444'>{np.nanmin(y):.2f}</h2></div>", unsafe_allow_html=True)
+    with m3:
+        st.markdown(f"<div class='metric-card'><b>المتوسط</b><br><h2>{np.nanmean(y):.2f}</h2></div>", unsafe_allow_html=True)
+    with m4:
+        st.markdown(f"<div class='metric-card'><b>المجال x</b><br><h2>{x_max - x_min:.1f}</h2></div>", unsafe_allow_html=True)
 
-    except Exception as e:
-        st.error(f"⚠️ خطأ في المعادلة: تأكد من كتابتها بشكل صحيح. مثال: sin(x)")
+except Exception as e:
+    st.error(f"⚠️ خطأ في الصيغة الرياضية. يرجى التأكد من استخدام 'x' كمتغير.")
 
-# Footer Section
-st.markdown("---")
-footer_col1, footer_col2 = st.columns(2)
-with footer_col1:
-    st.markdown(f"""
-    **👨‍💻 المبرمج:** يوسف  
-    **🏫 الصف:** عاشر (ب)
-    """)
-with footer_col2:
-    st.markdown("""
-    <div style='text-align: left; opacity: 0.6;'>
-    تم التطوير باستخدام Python & Streamlit 🚀
-    </div>
-    """, unsafe_allow_html=True)
+# --- FOOTER ---
+st.markdown("<br><hr>", unsafe_allow_html=True)
+f1, f2 = st.columns(2)
+with f1:
+    st.write("👤 **إعداد الطالب:** يوسف")
+    st.write("🏫 **الصف:** عاشر - ب")
+with f2:
+    st.markdown("<div style='text-align:left'>2024 © مختبر الرياضيات الرقمي</div>", unsafe_allow_html=True)
